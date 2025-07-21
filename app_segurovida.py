@@ -2,31 +2,27 @@ import streamlit as st
 from langchain.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import ConversationalRetrievalChain
-from langchain.llms import HuggingFaceHub
 from langchain.memory import ConversationBufferMemory
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.llms import HuggingFaceHub
 
-# Interfaz
 st.set_page_config(page_title="Asistente de Seguros")
 st.title("🛡️ Agente Virtual - Tú Eliges Vida")
 
 @st.cache_resource
 def crear_agente():
-    # Cargar documento y dividir en fragmentos
     loader = TextLoader("tu_eliges_vida.txt")
     docs = loader.load()
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_documents(docs)
 
-    # Embeddings de Hugging Face (sin clave)
     embeddings = HuggingFaceEmbeddings()
     vectorstore = FAISS.from_documents(chunks, embeddings)
 
-    # Usar modelo Hugging Face desde el hub (requiere clave si usas HuggingFaceHub)
-    # Puedes usar un modelo local aquí si prefieres.
     llm = HuggingFaceHub(
-        repo_id="google/flan-t5-base", model_kwargs={"temperature": 0.5, "max_length": 512}
+        repo_id="google/flan-t5-base",
+        model_kwargs={"temperature": 0.5, "max_length": 512}
     )
 
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
@@ -35,10 +31,8 @@ def crear_agente():
     )
     return chain
 
-# Crear el agente
 agente = crear_agente()
 
-# Chat
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
@@ -48,6 +42,5 @@ if consulta:
     st.session_state.chat_history.append(("Tú", consulta))
     st.session_state.chat_history.append(("Agente", respuesta))
 
-# Mostrar historial
 for rol, mensaje in reversed(st.session_state.chat_history):
     st.markdown(f"**{rol}:** {mensaje}")
